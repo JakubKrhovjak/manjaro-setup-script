@@ -137,6 +137,30 @@ print_info "Installing GKE gcloud auth plugin..."
 gcloud components install gke-gcloud-auth-plugin --quiet
 print_status "GKE auth plugin installed"
 
+# Install yay (AUR helper) if not present
+print_info "Checking for yay (AUR helper)..."
+if ! command -v yay &> /dev/null; then
+    print_info "Installing yay..."
+    cd /tmp
+    git clone https://aur.archlinux.org/yay.git
+    cd yay
+    makepkg -si --noconfirm
+    cd ~
+    print_status "yay installed"
+else
+    print_status "yay already installed"
+fi
+
+# Install JetBrains Toolbox
+print_info "Installing JetBrains Toolbox..."
+if ! command -v jetbrains-toolbox &> /dev/null; then
+    yay -S --needed --noconfirm jetbrains-toolbox
+    print_status "JetBrains Toolbox installed"
+    print_info "Launch Toolbox from your applications menu to install IntelliJ IDEA, GoLand, or other JetBrains IDEs"
+else
+    print_status "JetBrains Toolbox already installed"
+fi
+
 echo ""
 echo "=================================="
 print_status "Installation Complete!"
@@ -157,6 +181,8 @@ echo "  - Kind: $(kind --version)"
 echo "  - kubectl: $(kubectl version --client --short 2>/dev/null || echo 'installed')"
 echo "  - Google Cloud SDK: $(gcloud --version | head -n1)"
 echo "  - GKE auth plugin: installed"
+echo "  - yay: AUR helper"
+echo "  - JetBrains Toolbox: installed"
 echo ""
 print_info "IMPORTANT: Please run the following command or restart your terminal:"
 echo "  source ~/.bashrc"
@@ -165,3 +191,8 @@ print_info "If you use zsh, also run:"
 echo "  source ~/.zshrc"
 echo ""
 print_info "For Docker permissions to take effect, log out and back in."
+echo ""
+print_info "To install IntelliJ IDEA or GoLand:"
+echo "  1. Launch JetBrains Toolbox from your applications menu"
+echo "  2. Sign in with your JetBrains account"
+echo "  3. Install IntelliJ IDEA Ultimate and/or GoLand from the Toolbox"
