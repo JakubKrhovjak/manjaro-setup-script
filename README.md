@@ -1,87 +1,87 @@
 # Dev Tools Installation Script for Manjaro
 
-Automatizovaný instalační skript pro nastavení vývojového prostředí na Manjaro Linuxu.
+Automated installation script for setting up a development environment on Manjaro Linux.
 
-## Přehled
+## Overview
 
-Tento skript automaticky nainstaluje a nakonfiguruje kompletní sadu vývojářských nástrojů pro práci s různými technologiemi včetně Java, Node.js, Go, Docker, Kubernetes a cloud nástroji.
+This script automatically installs and configures a complete set of development tools for working with various technologies including Java, Node.js, Go, Docker, Kubernetes, and cloud tools.
 
-## Nainstalované nástroje
+## Installed Tools
 
-### Základní nástroje
-- **Git** - systém pro správu verzí
+### Core Tools
+- **Git** - version control system
 - **Base Development Tools** - `base-devel`, curl, wget, zip, unzip
 
-### Kontejnerizace
-- **Docker** - platforma pro kontejnerizaci aplikací
-- **Docker Compose** - nástroj pro definování multi-container Docker aplikací
+### Containerization
+- **Docker** - platform for containerizing applications
+- **Docker Compose** - tool for defining multi-container Docker applications
 
-### Programovací jazyky a runtime
-- **Go** - programovací jazyk
-- **Java 21** - nainstalováno přes SDKMAN (Temurin distribuce)
-- **Node.js 21** - nainstalováno přes NVM
+### Programming Languages & Runtimes
+- **Go** - programming language
+- **Java 21** - installed via SDKMAN (Temurin distribution)
+- **Node.js 21** - installed via NVM
 
-### Build nástroje a package managery
-- **Maven** - build nástroj pro Java projekty (přes SDKMAN)
-- **npm** - package manager pro Node.js (součást Node.js)
-- **SDKMAN** - SDK manager pro Java ekosystém
+### Build Tools & Package Managers
+- **Maven** - build tool for Java projects (via SDKMAN)
+- **npm** - package manager for Node.js (part of Node.js)
+- **SDKMAN** - SDK manager for Java ecosystem
 - **NVM** - Node Version Manager
 
 ### Infrastructure as Code
-- **Terraform** - nástroj pro správu infrastruktury jako kódu
+- **Terraform** - tool for managing infrastructure as code
 
 ### Kubernetes
-- **kubectl** - CLI pro práci s Kubernetes clustery
-- **Kind** - Kubernetes in Docker (lokální Kubernetes clustery)
+- **kubectl** - CLI for working with Kubernetes clusters
+- **Kind** - Kubernetes in Docker (local Kubernetes clusters)
 
-### Cloud nástroje
-- **Google Cloud SDK (gcloud)** - CLI pro Google Cloud Platform
-- **GKE gcloud auth plugin** - plugin pro autentizaci kubectl s GKE clustery
+### Cloud Tools
+- **Google Cloud SDK (gcloud)** - CLI for Google Cloud Platform
+- **GKE gcloud auth plugin** - plugin for kubectl authentication with GKE clusters
 
-## Požadavky
+## Requirements
 
-- Manjaro Linux nebo Arch-based distribuce
-- Sudo oprávnění
-- Internetové připojení
+- Manjaro Linux or Arch-based distribution
+- Sudo privileges
+- Internet connection
 
-## Instalace
+## Installation
 
-1. Stáhněte skript:
+1. Download the script:
 ```bash
 git clone <repository-url>
 cd setup-script
 ```
 
-2. Nastavte práva ke spuštění:
+2. Set execution permissions:
 ```bash
 chmod +x setup-script.sh
 ```
 
-3. Spusťte skript:
+3. Run the script:
 ```bash
 ./setup-script.sh
 ```
 
-## Po instalaci
+## Post-Installation
 
-### Restart shellu
-Pro načtení všech změn v prostředí spusťte:
+### Restart Shell
+To load all environment changes, run:
 ```bash
 source ~/.bashrc
 ```
 
-Pokud používáte zsh:
+If you use zsh:
 ```bash
 source ~/.zshrc
 ```
 
-Případně restartujte terminál.
+Or restart your terminal.
 
-### Docker oprávnění
-Pro aktivaci Docker oprávnění se odhlaste a znovu přihlaste do systému.
+### Docker Permissions
+To activate Docker permissions, log out and log back in to your system.
 
-### Ověření instalace
-Zkontrolujte verze nainstalovaných nástrojů:
+### Verify Installation
+Check versions of installed tools:
 ```bash
 git --version
 docker --version
@@ -96,54 +96,54 @@ kind --version
 gcloud --version
 ```
 
-## Konfigurace SDKMAN a NVM
+## Configuring SDKMAN and NVM
 
 ### SDKMAN
-SDKMAN je nainstalován v `~/.sdkman/`. Pro správu Java verzí:
+SDKMAN is installed in `~/.sdkman/`. To manage Java versions:
 ```bash
-sdk list java          # Seznam dostupných Java verzí
+sdk list java          # List available Java versions
 sdk install java <version>
 sdk use java <version>
 sdk default java <version>
 ```
 
 ### NVM
-NVM je nainstalován v `~/.nvm/`. Pro správu Node.js verzí:
+NVM is installed in `~/.nvm/`. To manage Node.js versions:
 ```bash
-nvm list               # Seznam nainstalovaných verzí
-nvm install <version>  # Instalace další verze
-nvm use <version>      # Použití konkrétní verze
+nvm list               # List installed versions
+nvm install <version>  # Install another version
+nvm use <version>      # Use specific version
 nvm alias default <version>
 ```
 
 ## Google Cloud SDK
 
-Po instalaci je potřeba provést inicializaci:
+After installation, you need to initialize:
 ```bash
 gcloud init
 ```
 
-Pro přihlášení k GCP:
+To login to GCP:
 ```bash
 gcloud auth login
 ```
 
-Pro konfiguraci kubectl s GKE:
+To configure kubectl with GKE:
 ```bash
 gcloud container clusters get-credentials <cluster-name> --region=<region>
 ```
 
-## Poznámky
+## Notes
 
-- Skript kontroluje, zda nástroje již nejsou nainstalovány, a přeskočí jejich instalaci
-- Všechny nástroje jsou instalovány s nejnovějšími stabilními verzemi
-- Skript používá `set -e`, což znamená, že se zastaví při první chybě
-- Docker vyžaduje sudo oprávnění pro správu služeb
-- Uživatel je automaticky přidán do Docker skupiny
+- The script checks if tools are already installed and skips their installation
+- All tools are installed with the latest stable versions
+- The script uses `set -e`, which means it stops at the first error
+- Docker requires sudo privileges for service management
+- The user is automatically added to the Docker group
 
-## Odinstalace
+## Uninstallation
 
-Pro odinstalaci jednotlivých nástrojů:
+To uninstall individual tools:
 
 ```bash
 # SDKMAN
@@ -155,14 +155,14 @@ rm -rf ~/.nvm
 # Google Cloud SDK
 rm -rf ~/google-cloud-sdk
 
-# Ostatní nástroje přes pacman
+# Other tools via pacman
 sudo pacman -R git docker docker-compose go terraform kubectl
 ```
 
-## Podpora
+## Support
 
-Pokud narazíte na problémy:
-1. Zkontrolujte, že máte aktuální Manjaro Linux
-2. Ověřte internetové připojení
-3. Zkontrolujte sudo oprávnění
-4. Podívejte se na výstup skriptu pro detaily chyb
+If you encounter problems:
+1. Check that you have an up-to-date Manjaro Linux
+2. Verify internet connection
+3. Check sudo privileges
+4. Look at the script output for error details
