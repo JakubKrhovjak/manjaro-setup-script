@@ -128,8 +128,14 @@ pacstrap -K /mnt \
     linux-firmware \
     base-devel \
     networkmanager \
+    networkmanager-wifi \
+    iwd \
+    iw \
+    wireless_tools \
+    wpa_supplicant \
     sudo \
     git \
+    flatpak \
     vim \
     man-db \
     man-pages \
@@ -211,6 +217,13 @@ pacstrap -K /mnt \
     ntfs-3g \
     exfatprogs \
     \
+    zsh \
+    zsh-syntax-highlighting \
+    zsh-autosuggestions \
+    zsh-completions \
+    starship \
+    \
+    \
     hunspell \
     hunspell-cs \
     hunspell-en_us \
@@ -270,15 +283,114 @@ EOF
 # Root password
 echo "root:${ROOT_PASS}" | chpasswd
 
-# Create user
-useradd -m -G wheel -s /bin/bash "${USERNAME}"
+# Create user with zsh as default shell
+useradd -m -G wheel -s /usr/bin/zsh "${USERNAME}"
 echo "${USERNAME}:${USER_PASS}" | chpasswd
+
+# Setup zsh config
+cat > /home/${USERNAME}/.zshrc <<'ZSHRC'
+# History
+HISTSIZE=10000
+SAVEHIST=10000
+HISTFILE=~/.zsh_history
+setopt HIST_IGNORE_DUPS HIST_IGNORE_SPACE SHARE_HISTORY
+
+# Autocompletion
+autoload -Uz compinit && compinit
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
+
+# Plugins
+source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+
+# Starship prompt
+eval "$(starship init zsh)"
+
+# Aliases
+alias ls='ls --color=auto'
+alias ll='ls -lah --color=auto'
+alias la='ls -A --color=auto'
+alias grep='grep --color=auto'
+alias k=kubectl
+alias ..='cd ..'
+alias ...='cd ../..'
+
+# pyenv
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)" 2>/dev/null || true
+ZSHRC
+
+chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.zshrc
+
+# Starship config — nice colorful preset
+mkdir -p /home/${USERNAME}/.config
+cat > /home/${USERNAME}/.config/starship.toml <<'STARSHIP'
+format = """
+[╭─](bold green)$os$username$hostname$directory$git_branch$git_status$python$nodejs$java$golang
+[╰─](bold green)$character"""
+
+[os]
+disabled = false
+style = "bold blue"
+
+[username]
+style_user = "bold yellow"
+show_always = true
+
+[hostname]
+ssh_only = false
+style = "bold cyan"
+
+[directory]
+style = "bold cyan"
+truncation_length = 4
+
+[git_branch]
+style = "bold purple"
+
+[git_status]
+style = "bold red"
+
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"
+STARSHIP
+
+chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.config
+
+# Set wallpaper (Next — same as Manjaro default, from breeze package)
+mkdir -p /home/${USERNAME}/.config
+cat > /home/${USERNAME}/.config/plasma-org.kde.plasma.desktop-appletsrc <<'WALLPAPER'
+[Containments][1][Wallpaper][org.kde.image][General]
+Image=/usr/share/wallpapers/Next/
+WALLPAPER
+chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.config/plasma-org.kde.plasma.desktop-appletsrc
 
 # Sudo for wheel group
 sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 
+# Pacman tuning — color, parallel downloads, multilib
+sed -i 's/^#Color/Color/' /etc/pacman.conf
+sed -i 's/^#ParallelDownloads.*/ParallelDownloads = 10/' /etc/pacman.conf
+sed -i '/^#\[multilib\]/{N;s/#\[multilib\]\n#Include/\[multilib\]\nInclude/}' /etc/pacman.conf
+pacman -Sy --noconfirm
+
+# Install yay (AUR helper)
+cd /tmp
+git clone https://aur.archlinux.org/yay.git
+chown -R ${USERNAME}:${USERNAME} /tmp/yay
+cd /tmp/yay
+sudo -u ${USERNAME} makepkg -si --noconfirm
+cd /
+
+# Flatpak — enable Flathub
+flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+
 # Enable services
 systemctl enable NetworkManager
+systemctl enable iwd
 systemctl enable sddm
 systemctl enable bluetooth
 systemctl enable cups
