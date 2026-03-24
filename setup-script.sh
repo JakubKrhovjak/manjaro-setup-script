@@ -3,7 +3,7 @@
 set -e
 
 echo "=================================="
-echo "Dev Tools Installation for Manjaro"
+echo "Dev Tools Installation for Arch Linux"
 echo "=================================="
 
 # Colors for output
@@ -79,6 +79,11 @@ print_info "Installing Maven via SDKMAN..."
 sdk install maven || true
 print_status "Maven installed: $(mvn --version | head -n1)"
 
+# Install Gradle via SDKMAN
+print_info "Installing Gradle via SDKMAN..."
+sdk install gradle || true
+print_status "Gradle installed: $(gradle --version | head -n1)"
+
 # Install NVM
 print_info "Installing NVM..."
 if [ ! -d "$HOME/.nvm" ]; then
@@ -102,40 +107,68 @@ nvm alias default 21
 print_status "Node.js installed: $(node --version)"
 print_status "npm installed: $(npm --version)"
 
-# Install Kind (Kubernetes in Docker)
-print_info "Installing Kind..."
-if ! command -v kind &> /dev/null; then
-    KIND_VERSION="v0.20.0"
-    curl -Lo ./kind https://kind.sigs.k8s.io/dl/${KIND_VERSION}/kind-linux-amd64
-    chmod +x ./kind
-    sudo mv ./kind /usr/local/bin/kind
-    print_status "Kind installed: $(kind --version)"
+# Install k3s (lightweight Kubernetes)
+print_info "Installing k3s..."
+if ! command -v k3s &> /dev/null; then
+    curl -sfL https://get.k3s.io | sh -
+    sudo systemctl enable k3s
+    sudo systemctl start k3s
+    # Allow current user to use kubectl via k3s kubeconfig
+    sudo mkdir -p /etc/rancher/k3s
+    echo "write-kubeconfig-mode: \"0644\"" | sudo tee /etc/rancher/k3s/config.yaml
+    mkdir -p "$HOME/.kube"
+    sudo cp /etc/rancher/k3s/k3s.yaml "$HOME/.kube/config"
+    sudo chown "$USER:$USER" "$HOME/.kube/config"
+    print_status "k3s installed: $(k3s --version | head -n1)"
 else
-    print_status "Kind already installed: $(kind --version)"
+    print_status "k3s already installed: $(k3s --version | head -n1)"
 fi
 
-# Install kubectl (for working with Kind clusters)
+# Install kubectl
 print_info "Installing kubectl..."
 sudo pacman -S --needed --noconfirm kubectl
-print_status "kubectl installed: $(kubectl version --client --short 2>/dev/null || kubectl version --client)"
+print_status "kubectl installed: $(kubectl version --client 2>/dev/null | head -n1)"
 
-# Install Google Cloud SDK
-print_info "Installing Google Cloud SDK..."
+# Install Google Cloud CLI (via AUR)
+print_info "Installing Google Cloud CLI..."
 if ! command -v gcloud &> /dev/null; then
-    curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz
-    tar -xf google-cloud-cli-linux-x86_64.tar.gz
-    ./google-cloud-sdk/install.sh --quiet --usage-reporting=false --path-update=true --command-completion=true
-    rm google-cloud-cli-linux-x86_64.tar.gz
-    source "$HOME/.bashrc" 2>/dev/null || true
-    print_status "Google Cloud SDK installed: $(gcloud --version | head -n1)"
+    yay -S --needed --noconfirm google-cloud-cli google-cloud-cli-gke-gcloud-auth-plugin
+    print_status "Google Cloud CLI installed: $(gcloud --version | head -n1)"
 else
-    print_status "Google Cloud SDK already installed: $(gcloud --version | head -n1)"
+    print_status "Google Cloud CLI already installed: $(gcloud --version | head -n1)"
 fi
 
-# Install GKE gcloud auth plugin
-print_info "Installing GKE gcloud auth plugin..."
-gcloud components install gke-gcloud-auth-plugin --quiet
-print_status "GKE auth plugin installed"
+# Install Python (system + pyenv for version management)
+print_info "Installing Python..."
+sudo pacman -S --needed --noconfirm python python-pip python-virtualenv
+print_status "Python installed: $(python --version)"
+
+print_info "Installing pyenv..."
+if [ ! -d "$HOME/.pyenv" ]; then
+    curl https://pyenv.run | bash
+    export PYENV_ROOT="$HOME/.pyenv"
+    export PATH="$PYENV_ROOT/bin:$PATH"
+    eval "$(pyenv init -)"
+    print_status "pyenv installed"
+else
+    print_status "pyenv already installed"
+    export PYENV_ROOT="$HOME/.pyenv"
+    export PATH="$PYENV_ROOT/bin:$PATH"
+    eval "$(pyenv init -)"
+fi
+
+# Add pyenv to shell config if not already there
+for RC in "$HOME/.bashrc" "$HOME/.zshrc"; do
+    if [ -f "$RC" ] && ! grep -q "pyenv" "$RC"; then
+        cat >> "$RC" <<'EOF'
+
+# pyenv
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
+EOF
+    fi
+done
 
 # Install yay (AUR helper) if not present
 print_info "Checking for yay (AUR helper)..."
@@ -177,9 +210,12 @@ echo "  - Maven: $(source ~/.sdkman/bin/sdkman-init.sh && mvn --version | head -
 echo "  - NVM: Installed at ~/.nvm"
 echo "  - Node.js: $(source ~/.nvm/nvm.sh && node --version)"
 echo "  - npm: $(source ~/.nvm/nvm.sh && npm --version)"
-echo "  - Kind: $(kind --version)"
-echo "  - kubectl: $(kubectl version --client --short 2>/dev/null || echo 'installed')"
-echo "  - Google Cloud SDK: $(gcloud --version | head -n1)"
+echo "  - Python: $(python --version)"
+echo "  - pip: $(pip --version | head -n1)"
+echo "  - pyenv: $($HOME/.pyenv/bin/pyenv --version 2>/dev/null || echo 'installed')"
+echo "  - k3s: $(k3s --version | head -n1)"
+echo "  - kubectl: $(kubectl version --client 2>/dev/null | head -n1)"
+echo "  - Google Cloud CLI: $(gcloud --version | head -n1)"
 echo "  - GKE auth plugin: installed"
 echo "  - yay: AUR helper"
 echo "  - JetBrains Toolbox: installed"
