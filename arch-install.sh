@@ -48,6 +48,7 @@ LOCALE="${LOCALE:-en_US.UTF-8}"
 read -rp "Console keymap (e.g. cz, cz-qwerty) [cz]: " KEYMAP
 KEYMAP="${KEYMAP:-cz}"
 
+
 read -rp "Data disk to mount at /data (e.g. sdb, leave blank to skip): " DATA_DISK
 if [ -n "$DATA_DISK" ]; then
     DATA_DISK="/dev/${DATA_DISK}"
@@ -163,7 +164,69 @@ pacstrap -K /mnt \
     plasma-meta \
     kde-applications-meta \
     sddm \
-    xdg-user-dirs
+    xdg-user-dirs \
+    mesa \
+    libva-mesa-driver \
+    vulkan-icd-loader \
+    \
+    firefox \
+    chromium \
+    \
+    vlc \
+    mpv \
+    \
+    ark \
+    p7zip \
+    unrar \
+    \
+    cups \
+    system-config-printer \
+    \
+    bluez \
+    bluez-utils \
+    bluedevil \
+    \
+    pipewire \
+    pipewire-alsa \
+    pipewire-pulse \
+    pipewire-jack \
+    wireplumber \
+    pavucontrol \
+    \
+    spectacle \
+    gwenview \
+    okular \
+    kate \
+    \
+    filelight \
+    kcalc \
+    \
+    wget \
+    curl \
+    htop \
+    zip \
+    unzip \
+    openssh \
+    usbutils \
+    ntfs-3g \
+    exfatprogs \
+    \
+    hunspell \
+    hunspell-cs \
+    hunspell-en_us \
+    \
+    libreoffice-fresh \
+    libreoffice-fresh-cs
+
+# ── AMD GPU drivers ─────────────────────────────────────────────────────────────
+info "Installing AMD GPU drivers..."
+pacstrap -K /mnt \
+    xf86-video-amdgpu \
+    vulkan-radeon \
+    libva-mesa-driver \
+    mesa-vdpau \
+    radeontop
+ok "AMD drivers installed (amdgpu, Vulkan, VA-API, VDPAU)"
 
 # ── fstab ──────────────────────────────────────────────────────────────────────
 info "Generating fstab..."
@@ -214,9 +277,11 @@ echo "${USERNAME}:${USER_PASS}" | chpasswd
 # Sudo for wheel group
 sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 
-# Enable NetworkManager and SDDM (KDE Plasma)
+# Enable services
 systemctl enable NetworkManager
 systemctl enable sddm
+systemctl enable bluetooth
+systemctl enable cups
 
 # Bootloader
 CHROOT
@@ -279,6 +344,7 @@ echo "  Disk:     $DISK"
 echo "  Hostname: $HOSTNAME"
 echo "  User:     $USERNAME"
 echo "  Boot:     $BOOT_MODE"
+echo "  GPU:      AMD (amdgpu, Vulkan, VA-API, VDPAU)"
 echo "  Locale:   $LOCALE (+ cs_CZ.UTF-8 for paper/time/measurement)"
 echo "  Keymap:   $KEYMAP"
 echo "  Fonts:    terminus (TTY), noto (full unicode+CJK+emoji), dejavu, liberation,"
